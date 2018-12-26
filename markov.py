@@ -7,8 +7,6 @@ Corpus created using scrape.py.
 import random
 import json
 
-import numpy as np
-
 class MarkovText():
     """
     Generates text using Markov chains.
@@ -17,7 +15,7 @@ class MarkovText():
     def __init__(self, file):
         self.corpus = None
         self.dict = {}
-        self.generated = []
+        self.generated = {'captions': []}
         self.read_corpus(file)
 
     def read_corpus(self, file):
@@ -43,28 +41,29 @@ class MarkovText():
         """
         pairs = self.init_pairs()
         for word_1, word_2 in pairs:
-            if word_1 in self.dict.keys():
-                self.dict[word_1].append(word_2)
-            else:
-                self.dict[word_1] = [word_2]
+            if not '@' in word_1 and not '@' in word_2:
+                if word_1 in self.dict.keys():
+                    self.dict[word_1].append(word_2)
+                else:
+                    self.dict[word_1] = [word_2]
 
     def gen_text(self, poss_length=(1, 10), num_outs=100):
         """
         Generates Markov text of length between range.
         """
-        while len(self.generated) < num_outs:
-            start = np.random.choice(np.random.choice(self.corpus))
+        if not self.dict:
+            self.init_dictionary()
+        while len(self.generated['captions']) < num_outs:
+            start = random.choice(self.dict.keys())
             sentence = [start]
             sentence_length = random.randint(poss_length[0], poss_length[1])
-            if not self.dict:
-                self.init_dictionary()
             while len(sentence) < sentence_length and sentence[-1] in self.dict:
                 if sentence[-1] in self.dict:
-                    sentence.append(np.random.choice(self.dict[sentence[-1]]))
-            self.generated.append(' '.join(sentence))
+                    sentence.append(random.choice(self.dict[sentence[-1]]))
+            self.generated['captions'].append(' '.join(sentence))
 
         with open('markov.json', 'w+') as file:
             json.dump(self.generated, file)
 
 if __name__ == '__main__':
-    MarkovText('scraped/captions.json').gen_text((1, 10), 10)
+    MarkovText('scraped/captions.json').gen_text((1, 10), 40)
