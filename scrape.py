@@ -18,12 +18,25 @@ class InstaScraper():
     accessibility caption contains requested descriptors.
     """
 
-    def __init__(self, out='scraped', file='profiles.txt'):
-        self.profiles = open(file).read().split()
-        self.captions = []
+    def __init__(self, out='scraped', caption_file='captions.json'):
+        self.profiles = None
         self.out_dir = out
+        if caption_file:
+            with open(os.path.join(out, caption_file), 'r') as filehandle:
+                self.captions = json.load(filehandle)
+        else:
+            self.captions = []
 
-    def meets_logic(self, check, params=['1 person', 'closeup']):
+    def read_profiles(self, file):
+        """
+        Reads in profiles from txt file, removing duplicates.
+        """
+        profiles = open(file).read().split()
+        unread = profiles[:profiles.index('===')]
+        read = profiles[profiles.index('===') + 1:]
+        self.profiles = list(set(unread) - set(read))
+
+    def meets_logic(self, check, params=('1 person', 'closeup')):
         """
         Checks whether accessibility caption exists and if so,
         whether desired descriptions are present.
@@ -45,11 +58,9 @@ class InstaScraper():
         data = json.loads(json_content)
         post_data = data['entry_data']['ProfilePage'][0]['graphql']['user']['edge_owner_to_timeline_media']['edges']
         for num, post in enumerate(post_data):
-            image_url = post['node']['display_url']
-            image_response = requests.get(image_url, stream=True)
+            image_response = requests.get(post['node']['display_url'], stream=True)
             image = misc.imread(io.BytesIO(image_response.content))
-            meets_logic = self.meets_logic(post['node'])
-            if meets_logic:
+            if self.meets_logic(post['node']):
                 if scrape_img:
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     cv2.imwrite(os.path.join(self.out_dir, profile + str(num) + '.png'), image)
@@ -58,11 +69,13 @@ class InstaScraper():
                         if 'text' in post['node']['edge_media_to_caption']['edges'][0]['node']:
                             self.captions.append(post['node']['edge_media_to_caption']['edges'][0]['node']['text'])
 
-    def scrape_all(self, scrape_img=True, scrape_caption=True):
+    def scrape_all(self, profiles='profiles.txt', scrape_img=True, scrape_caption=True):
         """
         Scrapes all profiles supplied.
         """
+        self.read_profiles(profiles)
         for profile in self.profiles:
+            print('Scraping profile: ' + profile)
             self.scrape_one(profile, scrape_img, scrape_caption)
         if scrape_caption:
             with open(os.path.join(self.out_dir, 'captions.json'), 'w+') as file:
