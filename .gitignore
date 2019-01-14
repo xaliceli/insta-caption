@@ -114,7 +114,6 @@ dmypy.json
 .pyre/
 
 # Media
-*.DS_Store
 *.png
 !example.png
 .DS_Store
