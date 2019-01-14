@@ -117,3 +117,4 @@ dmypy.json
 *.DS_Store
 *.png
 !example.png
+.DS_Store
