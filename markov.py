@@ -66,4 +66,4 @@ class MarkovText():
             json.dump(self.generated, file)
 
 if __name__ == '__main__':
-    MarkovText('scraped/captions.json').gen_text((1, 10), 40)
+    MarkovText('scraped/captions.json').gen_text((1, 20), 1000)

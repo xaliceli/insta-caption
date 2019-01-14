@@ -11,8 +11,8 @@ def main():
     """
     Scrapes profiles and generates Markov captions.
     """
-    InstaScraper(out='scraped', file='profiles.txt').scrape_all()
-    MarkovText(file='scraped/captions.json').gen_text((1, 20), 40)
+    InstaScraper(out='scraped').scrape_all(profiles='profiles.txt')
+    MarkovText(file='scraped/captions.json').gen_text((1, 20), 10000)
 
 if __name__ == '__main__':
     main()
